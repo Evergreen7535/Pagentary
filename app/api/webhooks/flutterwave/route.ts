@@ -26,14 +26,13 @@ export async function POST(request: NextRequest) {
       event?: string;
       data?: { id?: string | number; tx_ref?: string; status?: string };
     };
-    const transactionId = payload.data?.id;
     const txRef = payload.data?.tx_ref;
 
-    if (payload.event !== "charge.completed" || !transactionId || !txRef) {
+    if (payload.event !== "charge.completed" || !txRef) {
       return NextResponse.json({ received: true, ignored: true }, { status: 200 });
     }
 
-    await verifyAndCreditPayment(txRef, String(transactionId));
+    await verifyAndCreditPayment(txRef);
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
     console.error("Flutterwave webhook processing failed:", error);
