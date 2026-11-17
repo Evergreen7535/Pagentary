@@ -11,11 +11,10 @@ type FlutterwaveVerification = {
     amount?: number;
     currency?: string;
     charged_amount?: number;
-    customer?: { email?: string };
   };
 };
 
-export async function verifyAndCreditPayment(txRef: string, _transactionId?: string) {
+export async function verifyAndCreditPayment(txRef: string, transactionId?: string) {
   const secretKey = process.env.FLW_SECRET_KEY;
   if (!secretKey) throw new Error("Flutterwave secret key is not configured.");
 
@@ -31,18 +30,20 @@ export async function verifyAndCreditPayment(txRef: string, _transactionId?: str
     return { alreadyProcessed: true, votesCredited: payment.votes_to_credit };
   }
 
-  // Verify by our own merchant reference. This is reliable for asynchronous
-  // bank-transfer payments where the return/webhook transaction ID may be absent.
-  const verifyUrl = new URL("https://api.flutterwave.com/v3/transactions/verify_by_reference");
-  verifyUrl.searchParams.set("tx_ref", payment.tx_ref);
-  const response = await fetch(verifyUrl, {
-    headers: { Authorization: `Bearer ${secretKey}`, Accept: "application/json" },
-    cache: "no-store",
-  });
+  if (!transactionId || !/^\d+$/.test(transactionId)) {
+    throw new Error("A valid Flutterwave transaction ID is required for verification.");
+  }
 
+  const response = await fetch(
+    `https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`,
+    {
+      headers: { Authorization: `Bearer ${secretKey}`, Accept: "application/json" },
+      cache: "no-store",
+    },
+  );
   const result = (await response.json().catch(() => null)) as FlutterwaveVerification | null;
   if (!response.ok) {
-    console.error("Flutterwave reference verification HTTP error:", response.status, result?.message);
+    console.error("Flutterwave transaction verification HTTP error:", response.status, result?.message);
     throw new Error("Flutterwave transaction verification failed.");
   }
 
@@ -50,14 +51,14 @@ export async function verifyAndCreditPayment(txRef: string, _transactionId?: str
   if (
     result?.status !== "success" ||
     !transaction ||
+    String(transaction.id) !== transactionId ||
     transaction.tx_ref !== payment.tx_ref ||
     transaction.status !== "successful" ||
     transaction.currency !== payment.currency ||
     typeof transaction.amount !== "number" ||
-    Math.round(transaction.amount * 100) < Number(payment.amount_kobo) ||
-    transaction.id === undefined || transaction.id === null
+    Math.round(transaction.amount * 100) < Number(payment.amount_kobo)
   ) {
-    console.error("Flutterwave verification did not match pending payment:", {
+    console.error("Flutterwave transaction did not match pending payment:", {
       responseStatus: result?.status,
       transactionStatus: transaction?.status,
       referenceMatches: transaction?.tx_ref === payment.tx_ref,
@@ -71,11 +72,10 @@ export async function verifyAndCreditPayment(txRef: string, _transactionId?: str
     "finalize_flutterwave_payment",
     {
       p_tx_ref: payment.tx_ref,
-      p_transaction_id: String(transaction.id),
+      p_transaction_id: transactionId,
       p_gateway_payload: result as unknown as Record<string, unknown>,
     },
   );
-
   if (creditError) {
     console.error("Flutterwave vote allocation RPC failed:", creditError.message);
     throw new Error("Payment was verified but vote allocation needs review.");
