@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
+import { verifyAndCreditPayment } from "@/lib/payments/flutterwave";
 
 export const runtime = "nodejs";
 
@@ -7,32 +8,35 @@ function matchesSecret(received: string | null, expected: string | undefined) {
   if (!received || !expected) return false;
   const receivedBuffer = Buffer.from(received);
   const expectedBuffer = Buffer.from(expected);
-  return (
-    receivedBuffer.length === expectedBuffer.length &&
-    timingSafeEqual(receivedBuffer, expectedBuffer)
-  );
+  return receivedBuffer.length === expectedBuffer.length &&
+    timingSafeEqual(receivedBuffer, expectedBuffer);
 }
 
 export async function GET() {
-  return NextResponse.json({
-    service: "Pagentary Flutterwave webhook",
-    status: "endpoint_ready",
-  });
+  return NextResponse.json({ service: "Pagentary Flutterwave webhook", status: "endpoint_ready" });
 }
 
 export async function POST(request: NextRequest) {
-  const secretHash = process.env.FLW_SECRET_HASH;
-  const signature = request.headers.get("verif-hash");
-
-  if (!matchesSecret(signature, secretHash)) {
+  if (!matchesSecret(request.headers.get("verif-hash"), process.env.FLW_SECRET_HASH)) {
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
   }
 
-  // Payment verification and idempotent vote allocation will be enabled
-  // together with the checkout workflow. Do not credit votes from webhook
-  // payloads alone.
-  return NextResponse.json(
-    { received: true, processing: false, message: "Payment processing is not enabled yet." },
-    { status: 503 },
-  );
+  try {
+    const payload = await request.json() as {
+      event?: string;
+      data?: { id?: string | number; tx_ref?: string; status?: string };
+    };
+    const transactionId = payload.data?.id;
+    const txRef = payload.data?.tx_ref;
+
+    if (payload.event !== "charge.completed" || !transactionId || !txRef) {
+      return NextResponse.json({ received: true, ignored: true }, { status: 200 });
+    }
+
+    await verifyAndCreditPayment(txRef, String(transactionId));
+    return NextResponse.json({ received: true }, { status: 200 });
+  } catch (error) {
+    console.error("Flutterwave webhook processing failed:", error);
+    return NextResponse.json({ error: "Webhook processing failed; retry delivery." }, { status: 500 });
+  }
 }
