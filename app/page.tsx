@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   ArrowRight,
-  Check,
   ChevronDown,
   Crown,
   Menu,
