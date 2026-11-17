@@ -40,7 +40,7 @@ Configure the values from `.env.example` in your local environment and deploymen
 - [x] Session refresh middleware
 - [x] Administrator sign-in page and server-verified super-admin gate
 - [x] Protected administrator dashboard shell
-- [ ] First administrator account provisioning
+- [x] First super-administrator account provisioning
 - [ ] Competition and contestant management
 - [ ] Flutterwave checkout and verified vote allocation
 - [ ] Live public leaderboard
@@ -48,14 +48,7 @@ Configure the values from `.env.example` in your local environment and deploymen
 
 ## First administrator setup
 
-Create the first user in Supabase Authentication, then insert that user's Auth UUID into `public.admin_accounts` using the Supabase SQL Editor. Keep public sign-ups disabled. The admin dashboard checks the allow-list on the server using the server-only service role key.
-
-```sql
-insert into public.admin_accounts (user_id, is_super_admin)
-values ('AUTH_USER_UUID_HERE', true);
-```
-
-The database has a unique partial index that permits only one super-administrator.
+The initial super-administrator Auth user has been created and added to `public.admin_accounts`. Keep public sign-ups disabled. The admin dashboard checks the allow-list on the server using the server-only service role key. The database has a unique partial index that permits only one super-administrator.
 
 ## Security principles
 
