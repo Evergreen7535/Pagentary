@@ -14,10 +14,11 @@ A paid online pageantry voting platform. The platform will support contestant pr
 
 ## Getting started
 
-Requirements: Node.js 20.9 or later and npm.
+Requires Node.js 20.9 or later.
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
@@ -25,11 +26,36 @@ Open http://localhost:3000.
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local` and fill in credentials when the relevant services are configured. Never commit real credentials.
+Configure the values from `.env.example` in your local environment and deployment provider. Never commit real credentials.
 
-## Project status
+- `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are public project connection settings.
+- `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never be exposed to browser code or committed.
+- Flutterwave credentials are server-side only and will be used in the payment integration stage.
 
-The initial public homepage is in place. Supabase, Flutterwave, administrator authentication, contestant management and the voting engine will be implemented in later stages.
+## Current progress
+
+- [x] Premium public landing page and responsive navigation
+- [x] Initial Supabase voting schema with RLS enabled
+- [x] Supabase browser and server client utilities
+- [x] Session refresh middleware
+- [x] Administrator sign-in page and server-verified super-admin gate
+- [x] Protected administrator dashboard shell
+- [ ] First administrator account provisioning
+- [ ] Competition and contestant management
+- [ ] Flutterwave checkout and verified vote allocation
+- [ ] Live public leaderboard
+- [ ] Production deployment
+
+## First administrator setup
+
+Create the first user in Supabase Authentication, then insert that user's Auth UUID into `public.admin_accounts` using the Supabase SQL Editor. Keep public sign-ups disabled. The admin dashboard checks the allow-list on the server using the server-only service role key.
+
+```sql
+insert into public.admin_accounts (user_id, is_super_admin)
+values ('AUTH_USER_UUID_HERE', true);
+```
+
+The database has a unique partial index that permits only one super-administrator.
 
 ## Security principles
 
