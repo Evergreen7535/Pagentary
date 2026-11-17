@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         tx_ref: txRef,
         amount: (amountKobo / 100).toFixed(2),
         currency: "NGN",
-        redirect_url: `${appUrl.replace(/\/$/, "")}/vote/complete`,
+        redirect_url: `${appUrl.replace(/\/$/, "")}/api/payments/flutterwave/callback`,
         customer: { email, name, ...(phone ? { phonenumber: phone } : {}) },
         customizations: { title: "Pagentary Vote", description: `Votes for ${contestant.full_name}` },
         configuration: { session_duration: 15, max_retry_attempt: 3 },
