@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
 
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {[
-            { title: "Contestants", detail: "Register and manage contestant profiles.", icon: Users, href: "/admin/contestants" },
+            { title: "Contestants", detail: "Register and manage contestant profiles.", icon: Users, href: "/admin/contestants", ready: true },
             { title: "Competition", detail: "Set competition details and voting dates.", icon: Crown, href: "#coming-soon" },
             { title: "Voting settings", detail: "Configure pricing, limits and results visibility.", icon: Settings, href: "#coming-soon" },
           ].map((item) => {
@@ -51,7 +51,7 @@ export default async function AdminDashboardPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#d8b56d]/20 bg-[#d8b56d]/10 text-[#e8cb8a]"><Icon size={20} /></div>
                 <h2 className="mt-6 text-lg font-semibold text-[#f5e9d0]">{item.title}</h2>
                 <p className="mt-2 text-sm leading-6 text-[#b9aebe]">{item.detail}</p>
-                <span className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[#e1c27e]">Coming next <ArrowUpRight size={14} /></span>
+                <span className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[#e1c27e]">{item.ready ? "Open workspace" : "Coming next"} <ArrowUpRight size={14} /></span>
               </Link>
             );
           })}
@@ -60,7 +60,7 @@ export default async function AdminDashboardPage() {
         <section id="coming-soon" className="mt-8 rounded-xl border border-dashed border-[#d8b56d]/25 bg-[#191421]/60 p-7">
           <div className="flex items-center gap-3 text-[#e8cb8a]"><LayoutDashboard size={19} /><h2 className="font-semibold">Platform setup</h2></div>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[#b9aebe]">
-            Administrator authentication is connected to Supabase. Competition setup, contestant management, payment verification and the live voting dashboard will be added in the next development stages.
+            Administrator authentication is connected to Supabase, and contestant management is available now. Competition editing, voting settings, payment verification and the live voting dashboard are being developed in stages.
           </p>
         </section>
       </div>
