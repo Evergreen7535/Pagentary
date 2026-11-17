@@ -43,7 +43,7 @@ export default async function AdminDashboardPage() {
           {[
             { title: "Contestants", detail: "Register and manage contestant profiles.", icon: Users, href: "/admin/contestants", ready: true },
             { title: "Competition", detail: "Set competition details and voting dates.", icon: Crown, href: "/admin/competition", ready: true },
-            { title: "Voting settings", detail: "Configure pricing, limits and results visibility.", icon: Settings, href: "#coming-soon" },
+            { title: "Voting settings", detail: "Configure pricing, limits and results visibility.", icon: Settings, href: "/admin/voting-settings", ready: true },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -60,7 +60,7 @@ export default async function AdminDashboardPage() {
         <section id="coming-soon" className="mt-8 rounded-xl border border-dashed border-[#d8b56d]/25 bg-[#191421]/60 p-7">
           <div className="flex items-center gap-3 text-[#e8cb8a]"><LayoutDashboard size={19} /><h2 className="font-semibold">Platform setup</h2></div>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[#b9aebe]">
-            Administrator authentication is connected to Supabase, and contestant management is available now. Competition editing, voting settings, payment verification and the live voting dashboard are being developed in stages.
+            Administrator authentication, contestant management and competition management are connected. Voting settings are now available; payment verification and the live voting dashboard are being developed in stages.
           </p>
         </section>
       </div>
