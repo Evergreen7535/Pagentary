@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Crown, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import VoteForm from "./vote-form";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,12 @@ export default async function ContestantProfilePage({
     .maybeSingle();
 
   if (!competition) notFound();
+
+  const { data: votingSettings } = await supabase
+    .from("voting_settings")
+    .select("voting_enabled,price_per_vote_kobo,min_votes_per_transaction,max_votes_per_transaction")
+    .eq("singleton", true)
+    .maybeSingle();
 
   const photoUrl = contestant.photo_path
     ? supabase.storage.from("contestant-photos").getPublicUrl(contestant.photo_path).data.publicUrl
@@ -66,7 +73,19 @@ export default async function ContestantProfilePage({
             <p className="mt-4 whitespace-pre-line text-sm leading-8 text-[#c4b9cb]">{contestant.biography || "The contestant's biography will be published soon."}</p>
             <div className="mt-10 rounded-lg border border-[#d8b56d]/25 bg-[#191421] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[#f5e9d0]"><ShieldCheck size={17} className="text-[#d8b56d]" /> Voting information</div>
-              <p className="mt-2 text-sm leading-6 text-[#b9aebe]">Voting is not yet open. The official voting button will appear here once the payment and vote-verification system is ready and enabled by the organiser.</p>
+              {votingSettings?.voting_enabled ? (
+                <>
+                  <p className="mt-2 text-sm leading-6 text-[#b9aebe]">Support this contestant with a secure Flutterwave payment. Votes are credited only after payment verification.</p>
+                  <VoteForm
+                    contestantId={contestant.id}
+                    pricePerVote={Number(votingSettings.price_per_vote_kobo) / 100}
+                    minVotes={votingSettings.min_votes_per_transaction}
+                    maxVotes={votingSettings.max_votes_per_transaction}
+                  />
+                </>
+              ) : (
+                <p className="mt-2 text-sm leading-6 text-[#b9aebe]">Voting is not yet open. The official voting button will appear here once the organiser enables voting after payment testing is complete.</p>
+              )}
             </div>
             <Link href="/#contestants" className="outline-button mt-8 inline-flex">Explore other contestants</Link>
           </div>
