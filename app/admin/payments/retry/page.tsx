@@ -39,6 +39,7 @@ export default async function RetryPaymentPage({ searchParams }: Props) {
         <div className="mt-6 break-all rounded-lg bg-black/30 p-4 text-sm">{txRef}</div>
         <form action="/api/admin/payments/retry" method="post" className="mt-6">
           <input type="hidden" name="tx_ref" value={txRef} />
+          <input type="hidden" name="transaction_id" value="10620396" />
           <button type="submit" className="w-full rounded-lg bg-amber-400 px-5 py-3 font-semibold text-black hover:bg-amber-300">Verify existing payment</button>
         </form>
       </div>
