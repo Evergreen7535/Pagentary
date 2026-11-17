@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Crown, ArrowRight, Trophy, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
@@ -32,6 +33,35 @@ export default async function HomePage() {
       .eq("is_active", true)
       .order("display_order", { ascending: true });
     contestants = (data ?? []) as Contestant[];
+  }
+
+  const admin = createAdminClient();
+  const { data: votingSettings } = await admin
+    .from("voting_settings")
+    .select("public_results_enabled")
+    .eq("singleton", true)
+    .maybeSingle();
+
+  let leaderboard: { id: string; name: string; number: string | null; votes: number; photoUrl: string | null }[] = [];
+  if (competition && votingSettings?.public_results_enabled && contestants.length) {
+    const contestantIds = contestants.map((contestant) => contestant.id);
+    const { data: voteRows } = await admin
+      .from("votes")
+      .select("contestant_id,vote_count")
+      .in("contestant_id", contestantIds);
+    const voteTotals = new Map<string, number>();
+    for (const vote of voteRows ?? []) {
+      voteTotals.set(vote.contestant_id, (voteTotals.get(vote.contestant_id) ?? 0) + Number(vote.vote_count));
+    }
+    leaderboard = contestants.map((contestant) => ({
+      id: contestant.id,
+      name: contestant.stage_name || contestant.full_name,
+      number: contestant.contestant_number,
+      votes: voteTotals.get(contestant.id) ?? 0,
+      photoUrl: contestant.photo_path
+        ? supabase.storage.from("contestant-photos").getPublicUrl(contestant.photo_path).data.publicUrl
+        : null,
+    })).sort((a, b) => b.votes - a.votes || (a.number ?? "").localeCompare(b.number ?? ""));
   }
 
   const contestantCards = contestants.map((contestant) => ({
@@ -103,7 +133,37 @@ export default async function HomePage() {
 
       <section id="how-to-vote" className="border-y border-white/10 bg-[#17121e] py-24"><div className="site-container"><div className="mx-auto max-w-2xl text-center"><div className="eyebrow">Simple, secure and transparent</div><h2 className="mt-5 font-serif text-4xl text-[#f8f1e7] sm:text-5xl">How to <span className="italic gold-text">vote</span></h2><p className="mt-5 text-sm leading-7 text-[#b9aebe]">Choose a contestant, select your votes and complete payment. Votes will be allocated only after successful payment verification.</p></div><div className="mt-14 grid gap-5 md:grid-cols-3">{[{n:"01",t:"Choose your contestant",d:"Explore published profiles and select who you want to support."},{n:"02",t:"Choose your votes",d:"The vote price determines the number of votes for your payment."},{n:"03",t:"Pay securely",d:"Complete payment through Flutterwave. Votes are credited after verification."}].map(step=><article key={step.n} className="rounded-lg border border-white/10 bg-[#100d16] p-7"><span className="font-serif text-4xl italic text-[#d8b56d]">{step.n}</span><h3 className="mt-6 text-lg font-semibold text-[#f5e9d0]">{step.t}</h3><p className="mt-3 text-sm leading-7 text-[#b9aebe]">{step.d}</p></article>)}</div></div></section>
 
-      <section id="leaderboard" className="site-container py-24"><div className="mx-auto max-w-2xl text-center"><div className="eyebrow">The race for the crown</div><h2 className="mt-5 font-serif text-4xl text-[#f8f1e7] sm:text-5xl">Live <span className="italic gold-text">leaderboard</span></h2><p className="mt-5 text-sm leading-7 text-[#b9aebe]">Verified contestant rankings will be displayed here when voting and public results are enabled.</p></div><div className="mx-auto mt-10 max-w-3xl rounded-lg border border-white/10 bg-[#191421] p-8 text-center"><Trophy size={34} className="mx-auto text-[#d8b56d]" strokeWidth={1.2} /><p className="mt-4 font-serif text-2xl text-[#f5e9d0]">Leaderboard coming soon</p><p className="mt-2 text-sm text-[#b9aebe]">Rankings will be published from verified votes.</p></div></section>
+      <section id="leaderboard" className="site-container py-24">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="eyebrow">The race for the crown</div>
+          <h2 className="mt-5 font-serif text-4xl text-[#f8f1e7] sm:text-5xl">Live <span className="italic gold-text">leaderboard</span></h2>
+          <p className="mt-5 text-sm leading-7 text-[#b9aebe]">Rankings are calculated from successfully verified payments only.</p>
+        </div>
+        {!votingSettings?.public_results_enabled ? (
+          <div className="mx-auto mt-10 max-w-3xl rounded-lg border border-white/10 bg-[#191421] p-8 text-center"><Trophy size={34} className="mx-auto text-[#d8b56d]" strokeWidth={1.2} /><p className="mt-4 font-serif text-2xl text-[#f5e9d0]">Results are not currently public</p><p className="mt-2 text-sm text-[#b9aebe]">The organiser has temporarily hidden the leaderboard.</p></div>
+        ) : leaderboard.length ? (
+          <div className="mx-auto mt-10 max-w-3xl overflow-hidden rounded-lg border border-white/10 bg-[#191421]">
+            {leaderboard.map((entry, index) => (
+              <div key={entry.id} className="flex items-center gap-4 border-b border-white/10 px-5 py-4 last:border-b-0 sm:px-7">
+                <span className="w-8 shrink-0 text-center font-serif text-xl text-[#d8b56d]">{index + 1}</span>
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-[#d8b56d]/30 bg-[#241b2d]">
+                  {entry.photoUrl ? <img src={entry.photoUrl} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-[#d8b56d]"><Crown size={22} /></div>}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-serif text-lg text-[#f5e9d0]">{entry.name}</p>
+                  {entry.number && <p className="text-xs text-[#a99db0]">Contestant {entry.number}</p>}
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="font-semibold tabular-nums text-[#e5c77f]">{entry.votes.toLocaleString()}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-[#a99db0]">Votes</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mx-auto mt-10 max-w-3xl rounded-lg border border-white/10 bg-[#191421] p-8 text-center"><Trophy size={34} className="mx-auto text-[#d8b56d]" strokeWidth={1.2} /><p className="mt-4 font-serif text-2xl text-[#f5e9d0]">No verified votes yet</p><p className="mt-2 text-sm text-[#b9aebe]">Contestant rankings will appear here after the first verified vote.</p></div>
+        )}
+      </section>
 
       <footer className="border-t border-white/10 bg-[#0b0910] py-9"><div className="site-container flex flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left"><a href="#home" className="flex items-center gap-2 text-sm font-semibold tracking-[0.16em] text-[#ead9b5]"><Crown size={17} className="text-[#d8b56d}" /> PAGENTARY</a><p className="text-xs text-[#82798a]">© {new Date().getFullYear()} Pagentary. All rights reserved.</p><a href="#home" className="text-xs text-[#b9aebe] hover:text-[#f1d99d]">Back to top ↑</a></div></footer>
     </main>
