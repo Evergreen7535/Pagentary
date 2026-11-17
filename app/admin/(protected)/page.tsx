@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ArrowUpRight, Crown, LayoutDashboard, LogOut, Settings, Users } from "lucide-react";
+import { ArrowUpRight, Crown, LayoutDashboard, LogOut, Settings, Users, CreditCard } from "lucide-react";
 
 export default async function AdminDashboardPage() {
   async function signOut() {
@@ -44,6 +44,7 @@ export default async function AdminDashboardPage() {
             { title: "Contestants", detail: "Register and manage contestant profiles.", icon: Users, href: "/admin/contestants", ready: true },
             { title: "Competition", detail: "Set competition details and voting dates.", icon: Crown, href: "/admin/competition", ready: true },
             { title: "Voting settings", detail: "Configure pricing, limits and results visibility.", icon: Settings, href: "/admin/voting-settings", ready: true },
+            { title: "Payments", detail: "Review payment records, amounts and vote verification status.", icon: CreditCard, href: "/admin/payments", ready: true },
           ].map((item) => {
             const Icon = item.icon;
             return (
