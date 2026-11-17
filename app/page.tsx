@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Crown, ArrowRight, Trophy, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +82,7 @@ export default async function HomePage() {
         {contestantCards.length ? (
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {contestantCards.map((contestant) => (
-              <article key={contestant.id} className="overflow-hidden rounded-lg border border-white/10 bg-[#191421]">
+              <article key={contestant.id} className="overflow-hidden rounded-lg border border-white/10 bg-[#191421] transition hover:border-[#d8b56d]/50">
                 <div className="aspect-[4/5] overflow-hidden bg-[#241b2d]">
                   {contestant.photoUrl ? <img src={contestant.photoUrl} alt={contestant.full_name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-[#d8b56d]"><Crown size={54} strokeWidth={1} /></div>}
                 </div>
@@ -90,7 +91,7 @@ export default async function HomePage() {
                   <h3 className="mt-2 font-serif text-2xl text-[#f5e9d0]">{contestant.stage_name || contestant.full_name}</h3>
                   {contestant.stage_name && <p className="mt-1 text-xs text-[#b9aebe]">{contestant.full_name}</p>}
                   {contestant.biography && <p className="mt-4 line-clamp-4 text-sm leading-6 text-[#b9aebe]">{contestant.biography}</p>}
-                  <p className="mt-5 text-xs text-[#d8b56d]">Voting details will be announced soon</p>
+                  <Link href={`/contestants/${contestant.id}`} className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-[#e5c77f] hover:text-[#fff0bd]">View full profile <ArrowRight size={14} /></Link>
                 </div>
               </article>
             ))}
