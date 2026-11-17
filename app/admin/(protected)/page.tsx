@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
 
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {[
-            { title: "Contestants", detail: "Register and manage contestant profiles.", icon: Users, href: "#coming-soon" },
+            { title: "Contestants", detail: "Register and manage contestant profiles.", icon: Users, href: "/admin/contestants" },
             { title: "Competition", detail: "Set competition details and voting dates.", icon: Crown, href: "#coming-soon" },
             { title: "Voting settings", detail: "Configure pricing, limits and results visibility.", icon: Settings, href: "#coming-soon" },
           ].map((item) => {
