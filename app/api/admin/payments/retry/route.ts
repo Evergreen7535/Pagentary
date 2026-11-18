@@ -23,13 +23,12 @@ export async function POST(request: NextRequest) {
 
   const form = await request.formData();
   const txRef = String(form.get("tx_ref") || "").trim();
-  const transactionId = String(form.get("transaction_id") || "").trim();
   if (!/^PAG-[a-f0-9-]{36}$/i.test(txRef)) {
     return NextResponse.json({ error: "Invalid Pagentary transaction reference." }, { status: 400 });
   }
 
   try {
-    const result = await verifyAndCreditPayment(txRef, transactionId);
+    const result = await verifyAndCreditPayment(txRef);
     const destination = new URL("/admin/payments/retry", request.url);
     destination.searchParams.set("result", "success");
     destination.searchParams.set("votes", String(result.votesCredited));
