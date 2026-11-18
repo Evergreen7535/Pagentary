@@ -14,7 +14,7 @@ type FlutterwaveVerification = {
   };
 };
 
-export async function verifyAndCreditPayment(txRef: string, transactionId?: string) {
+export async function verifyAndCreditPayment(txRef: string) {
   const secretKey = process.env.FLW_SECRET_KEY;
   if (!secretKey) throw new Error("Flutterwave secret key is not configured.");
 
