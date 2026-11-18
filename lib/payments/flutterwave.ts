@@ -30,12 +30,10 @@ export async function verifyAndCreditPayment(txRef: string, transactionId?: stri
     return { alreadyProcessed: true, votesCredited: payment.votes_to_credit };
   }
 
-  if (!transactionId || !/^\d+$/.test(transactionId)) {
-    throw new Error("A valid Flutterwave transaction ID is required for verification.");
-  }
-
+  // Verify by our own merchant reference. Flutterwave's bank-transfer receipt
+  // labels this tx_ref as "Transaction ID", which is not the numeric API ID.
   const response = await fetch(
-    `https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`,
+    `https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${encodeURIComponent(payment.tx_ref)}`,
     {
       headers: { Authorization: `Bearer ${secretKey}`, Accept: "application/json" },
       cache: "no-store",
@@ -51,7 +49,7 @@ export async function verifyAndCreditPayment(txRef: string, transactionId?: stri
   if (
     result?.status !== "success" ||
     !transaction ||
-    String(transaction.id) !== transactionId ||
+    !transaction.id ||
     transaction.tx_ref !== payment.tx_ref ||
     transaction.status !== "successful" ||
     transaction.currency !== payment.currency ||
@@ -72,7 +70,7 @@ export async function verifyAndCreditPayment(txRef: string, transactionId?: stri
     "finalize_flutterwave_payment",
     {
       p_tx_ref: payment.tx_ref,
-      p_transaction_id: transactionId,
+      p_transaction_id: String(transaction.id),
       p_gateway_payload: result as unknown as Record<string, unknown>,
     },
   );
